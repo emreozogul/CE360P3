@@ -2,12 +2,13 @@ import eel
 import serial
 import serial.tools.list_ports
 
-eel.init('web')  # Folder with web files
+eel.init('web')  # Initialize the web folder
 
 def find_esp32_port():
     ports = serial.tools.list_ports.comports()
     for port in ports:
-        if any(x in port.description for x in ['ESP32', 'CP210x', 'UART Bridge']):  # Check for multiple possible identifiers
+        print(f"Port: {port.device}, Description: {port.description}, HWID: {port.hwid}")
+        if 'ESP32BT' in port.device:  # Look for the specific device name
             return port.device
     return None
 
@@ -22,7 +23,9 @@ def send_credentials(ssid, password):
             bt_serial.write(f"{ssid}\n".encode())
             bt_serial.write(f"{password}\n".encode())
             response = bt_serial.readline().decode().strip()
-            eel.receiveMessage(response)  # Send response back to frontend
+            if not response:  # Check if response is empty
+                response = "No response from ESP32."
+            eel.receiveMessage(response)
     except Exception as e:
         eel.receiveMessage(f"Failed to send data: {str(e)}")
 

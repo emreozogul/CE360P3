@@ -5,11 +5,11 @@ BluetoothSerial SerialBT;
 
 void setup() {
   Serial.begin(115200);
-  if (!SerialBT.begin("ESP32BT")) { // Start Bluetooth device with name "ESP32BT"
+  if (!SerialBT.begin("ESP32EmreMeren")) {
     Serial.println("Bluetooth init failed");
+  } else {
+    Serial.println("Bluetooth device is ready to pair");
   }
-
-  Serial.println("Bluetooth device is ready to pair");
 }
 
 void loop() {
@@ -19,14 +19,25 @@ void loop() {
     ssid.trim();
     password.trim();
 
+    Serial.print("Received SSID: ");
+    Serial.println(ssid);
+    Serial.print("Received password: ");
+    Serial.println(password);
+
     WiFi.begin(ssid.c_str(), password.c_str());
 
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
     }
-    SerialBT.println("WiFi connected");
-    Serial.println("WiFi connected successfully");
+
+    if (WiFi.isConnected()) {
+      Serial.println("WiFi connected successfully");
+      SerialBT.println("WiFi connected successfully");
+    } else {
+      Serial.println("Failed to connect to WiFi");
+      SerialBT.println("Failed to connect to WiFi");
+    }
   }
   delay(20);
 }
