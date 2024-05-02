@@ -3,25 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 WiFi Setup</title>
-</head>
-<body>
-    <h1>ESP32 WiFi Configuration</h1>
-    <input type="text" id="ssid" placeholder="Enter SSID"><br>
-    <input type="password" id="password" placeholder="Enter Password"><br>
-    <button onclick="sendData()">Submit</button>
-    <script src="eel.js"></script>
-    <script>
-        eel.expose(receiveMessage);
-        function receiveMessage(message) {
-            alert(message);
+    <title>ESP32 WiFi Configurator</title>
+    <script type="text/javascript" src="/eel.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #b8b6b6;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            color: #333;
+        }
+        label {
+            margin-top: 10px;
+            display: block;
+            color: #666;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 300px;
+            margin: auto;
+        }
+    </style>
+    <script type="text/javascript">
+        eel.expose(updatePorts);
+        function updatePorts(ports) {
+            const select = document.getElementById('ports');
+            select.innerHTML = '';
+            ports.forEach(port => {
+                const option = document.createElement('option');
+                option.value = port;
+                option.innerText = port;
+                select.appendChild(option);
+            });
         }
 
-        function sendData() {
+        function send() {
+            const port = document.getElementById('ports').value;
             const ssid = document.getElementById('ssid').value;
             const password = document.getElementById('password').value;
-            eel.send_credentials(ssid, password);
+            eel.send_credentials(port, ssid, password)((response) => {
+                alert(response);
+            });
         }
+
+        function refreshPorts() {
+            eel.list_ports()(updatePorts);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            refreshPorts();
+        }, false);
     </script>
+</head>
+<body>
+    <div class="container">
+        <h1>ESP32 WiFi Configurator</h1>
+        <div>
+            <label for="ports">Select COM Port:</label>
+            <select id="ports"></select>
+            <button onclick="refreshPorts()">Refresh Ports</button>
+        </div>
+        <div>
+            <label for="ssid">SSID:</label>
+            <input type="text" id="ssid">
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password">
+        </div>
+        <button onclick="send()">Send Credentials</button>
+    </div>
 </body>
 </html>

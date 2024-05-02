@@ -2,31 +2,29 @@ import eel
 import serial
 import serial.tools.list_ports
 
-eel.init('web')  # Initialize the web folder
+eel.init('web')  # Pointing to the web directory
 
-def find_esp32_port():
+def get_ports():
+    """ List serial ports likely to be Bluetooth connections for ESP32 """
     ports = serial.tools.list_ports.comports()
     for port in ports:
-        print(f"Port: {port.device}, Description: {port.description}, HWID: {port.hwid}")
-        if 'ESP32BT' in port.device:  # Look for the specific device name
-            return port.device
-    return None
+        print(port.device)
+    esp32_ports = [port.device for port in ports if 'ESP32' in port.device]
+    return esp32_ports
 
 @eel.expose
-def send_credentials(ssid, password):
-    port = find_esp32_port()
-    if port is None:
-        eel.receiveMessage("ESP32 not found. Please pair with ESP32 and try again.")
-        return
+def send_credentials(port, ssid, password):
+    """ Send credentials over the specified serial port """
     try:
-        with serial.Serial(port, 115200, timeout=10) as bt_serial:
-            bt_serial.write(f"{ssid}\n".encode())
-            bt_serial.write(f"{password}\n".encode())
-            response = bt_serial.readline().decode().strip()
-            if not response:  # Check if response is empty
-                response = "No response from ESP32."
-            eel.receiveMessage(response)
+        with serial.Serial(port, 115200, timeout=10) as ser:
+            ser.write((ssid + '\n').encode())
+            ser.write((password + '\n').encode())
+            return "Credentials sent successfully!"
     except Exception as e:
-        eel.receiveMessage(f"Failed to send data: {str(e)}")
+        return f"Failed to send credentials: {str(e)}"
 
-eel.start('index.html', size=(700, 500))
+@eel.expose
+def list_ports():
+    return get_ports()
+
+eel.start('index.html', size=(500, 500))
