@@ -1,30 +1,34 @@
 import serial
 import time
 
-bluetooth_port = '/dev/tty.ESP32-BT-EE'
-
-# Establish Bluetooth serial connection
-try:
-    bluetooth = serial.Serial(bluetooth_port, 115200)
-    print("Bluetooth connection established.")
-except serial.SerialException:
-    print("Failed to establish Bluetooth connection. Check if the port is correct.")
-    exit()
+def send_data(data):
+    bluetooth_serial.write(data.encode())
 
 def send_credentials():
+    global ssid, password
     ssid = input("Enter WiFi SSID: ")
-    password = input("Enter WiFi Password: ")
+    password = input("Enter WiFi password: ")
 
-    # Send credentials over Bluetooth
-    bluetooth.write(ssid.encode() + b'\n')
-    time.sleep(0.5)  # Delay to ensure data is sent sequentially
-    bluetooth.write(password.encode() + b'\n')
-
-    print("Credentials sent successfully.")
+    send_data(ssid + ":" + password + "\n")
+    time.sleep(2) 
 
 try:
-    while True:
-        option = input("Enter 's' to send WiFi credentials or 'q' to quit: ")
+    global is_connected
+    print("ESP32 Bluetooth Serial Terminal")
+    print("Trying to find port '/dev/tty.ESP32-BT-Taha'...")
+    bluetooth_port = '/dev/tty.ESP32-BT-Taha'
+    
+    try:
+        bluetooth_serial = serial.Serial(bluetooth_port, 115200, timeout=1)
+        is_connected = True
+    except serial.SerialException as e:
+        print("Failed to establish Bluetooth connection:", e)
+        is_connected = False
+        
+    time.sleep(2)
+    
+    while is_connected:
+        option = input("Enter 'send' to send WiFi credentials or 'quit' to quit: ")
 
         if option.lower() == 's':
             send_credentials()
@@ -32,8 +36,8 @@ try:
             print("Exiting...")
             break
         else:
-            print("Invalid option. Please enter 's' or 'q'.")
+            print("Invalid option. Please enter 'send' or 'quit'.")
+    if not is_connected:
+        print("Bluetooth connection is closed.")
 except KeyboardInterrupt:
-    print("\nKeyboard Interrupt. Exiting...")
-finally:
-    bluetooth.close()
+    bluetooth_serial.close()

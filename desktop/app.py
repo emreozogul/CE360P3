@@ -1,30 +1,32 @@
 import eel
 import serial
-import serial.tools.list_ports
+import time
+eel.init('web')  
 
-eel.init('web')  # Pointing to the web directory
+bluetooth_port = '/dev/tty.ESP32-BT-Taha'
 
-def get_ports():
-    """ List serial ports likely to be Bluetooth connections for ESP32 """
-    ports = serial.tools.list_ports.comports()
-    for port in ports:
-        print(port.device)
-    esp32_ports = [port.device for port in ports if 'ESP32' in port.device]
-    return esp32_ports
+try:
+    bluetooth_serial = serial.Serial(bluetooth_port, 115200, timeout=1)
+except serial.SerialException as e:
+    print("Failed to establish Bluetooth connection:", e)
+    exit()
+    
+time.sleep(2)
 
 @eel.expose
-def send_credentials(port, ssid, password):
-    """ Send credentials over the specified serial port """
+def send_credentials(ssid, password):
     try:
-        with serial.Serial(port, 115200, timeout=10) as ser:
-            ser.write((ssid + '\n').encode())
-            ser.write((password + '\n').encode())
-            return "Credentials sent successfully!"
-    except Exception as e:
-        return f"Failed to send credentials: {str(e)}"
+        while True:
+            send_data(ssid + ":" + password + "\n")
+            print(ssid, password)
+            time.sleep(2) 
 
-@eel.expose
-def list_ports():
-    return get_ports()
+    except KeyboardInterrupt:
+        bluetooth_serial.close()
+    
+    
+def send_data(data):
+    bluetooth_serial.write(data.encode())
+    
 
 eel.start('index.html', size=(500, 500))
